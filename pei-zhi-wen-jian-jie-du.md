@@ -16,3 +16,7 @@ main{
 }
 ```
 
+server继承main，location继承server，upstream即不会继承其他设置也不会被继承。
+
+
+

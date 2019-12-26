@@ -72,3 +72,88 @@ http{
 * default\_type属于HTTP核心模块指令，这里设定默认类型为二进制流，也就是当文件类型未定义时使用这种方式，例如在没有配置PHP环境时，Nginx是不予解析的，此时，用浏览器访问PHP文件就会出现下载窗口。
 * charset gb2312; 指定客户端编码格式。
 
+### 3.1 客户端head缓存参数
+
+```text
+server_names_hash_bucket_size 128;
+client_header_buffer_size 32k; 
+large_client_header_buffers 4 128k; 
+client_max_body_size 10m; 
+client_body_buffer_size 128k; 
+sendfile on ; 
+tcp_nopush on;
+tcp_nodelay on;
+keepalive_timeout 65 : 
+client_body_timeout 60s;
+send_timeout 60s;
+```
+
+
+
+* `server_names_hash_bucket_size 128;`: 服务器名字的hash表大小。
+* `client_header_buffer_size 32k;`：用来指定来自客户端请求头的header buffer 大小。对于大多数请求，1K的缓存已经足够了，如果自定义了消息头或有更大的cookie，可以增大缓存区大小。
+* `large_client_header_buffers 4 128k;`：用来指定客户端请求中较大的消息头的缓存最大数量和大小，4为个数，128k为大小，最大缓存为4个128KB。
+* `client_max_body_size 8m;` : 客户端请求的最大的单个文件字节数。
+* `client_max_body_size 10m;` : 允许客户端请求的最大单文件字节数。如果有上传较大文件，请设置它的限制值。
+* `client_body_buffer_size 128k;`: 缓冲区代理缓冲用户端请求的最大字节数。
+* `sendfile on ;` : 开启高效文件传输模式，sendfile指令指定nginx是否调用sendfile函数来输出文件，减少用户空间到内核空间的上下文切换。对于普通应用设为 on，如果用来进行下载等应用磁盘IO重负载应用，可设置为off，以平衡磁盘与网络I/O处理速度，降低系统的负载。开启 `tcp_nopush on;` 和`tcp_nodelay on;` 防止网络阻塞。
+* `keepalive_timeout 65 :` : 长连接超时时间，单位是秒，这个参数很敏感，涉及浏览器的种类、后端服务器的超时设置、操作系统的设置，可以另外起一片文章了。长连接请求大量小文件的时候，可以减少重建连接的开销，但假如有大文件上传，65s内没上传完成会导致失败。如果设置时间过长，用户又多，长时间保持连接会占用大量资源。
+* `client_body_timeout 60s;` : 用于设置客户端请求主体读取超时时间，默认是60s。如果超过这个时间，客户端还没有发送任何数据，nginx将返回`Request time out(408)`错误。
+* `send_timeout :` : 用于指定响应客户端的超时时间。这个超时仅限于两个连接活动之间的时间，如果超过这个时间，客户端没有任何活动，Nginx将会关闭连接。
+
+## FastCGI参数
+
+FastCGI相关参数是为了改善网站的性能：减少资源占用，提高访问速度。
+
+```text
+fastcgi_connect_timeout 300;  
+fastcgi_send_timeout 300;  
+fastcgi_read_timeout 300;  
+fastcgi_buffer_size 64k;  
+fastcgi_buffers 4 64k;  
+fastcgi_busy_buffers_size 128k;  
+fastcgi_temp_file_write_size 128k;  
+fastcgi_cache TEST;  
+fastcgi_cache_path /usr/local/nginx/fastcgi_cache levels=1:2 keys_zone=TEST:10m inactive=5m;  
+fastcgi_cache_valid 200 302 1h;  
+fastcgi_cache_valid 301 1d;  
+fastcgi_cache_valid any 1m; 
+```
+
+
+
+* `fastcgi_connect_timeout 300;` 指定连接到后端FastCGI的超时时间。
+* `fastcgi_send_timeout 300;`指定向FastCGI传送请求的超时时间，这个值是已经完成两次握手后向FastCGI传送请求的超时时间。
+* `fastcgi_read_timeout 300;`指定接收FastCGI应答的超时时间，这个值是已经完成两次握手后接收FastCGI应答的超时时间。
+* `fastcgi_buffer_size 64k;` 用于指定读取FastCGI应答第一部分需要多大的缓冲区，这个值表示将使用1个64KB的缓冲区读取应答的第一部分（应答头），可以设置为fastcgi\_buffers选项指定的缓冲区大小。
+* `fastcgi_buffers 4 64k;` 指定本地需要用多少和多大的缓冲区来缓冲FastCGI的应答请求。如果一个PHP脚本所产生的页面大小为256KB，那么会为其分配4个64KB的缓冲区来缓存；如果页面大小大于256KB，那么大于256KB的部分会缓存到fastcgi\_temp指定的路径中，但是这并不是好方法，因为内存中的数据处理速度要快于硬盘。一般这个值应该为站点中PHP脚本所产生的页面大小的中间值，如果站点大部分脚本所产生的页面大小为256KB，那么可以把这个值设置为“16 16k”、“4 64k”等。
+* `fastcgi_busy_buffers_size 128k;` 默认值是fastcgi\_buffers的两倍。
+* `fastcgi_temp_file_write_size 128k;` 表示在写入缓存文件时使用多大的数据块，默认值是fastcgi\_buffers的两倍。
+* `fastcgi_cache TEST;` 表示开启FastCGI缓存并为其指定一个名称。开启缓存非常有用，可以有效降低CPU的负载，并且防止502错误的发生。但是开启缓存也会引起很多问题，要视具体情况而定。
+* `fastcgi_cache_path /usr/local/nginx/fastcgi_cache levels=1:2 keys_zone=TEST:10m inactive=5m;` FastCGI缓存指定一个文件路径、目录结构等级、关键字区域存储时间和非活动删除时间。
+* `fastcgi_cache_valid 200 302 1h;` 用来指定应答代码的缓存时间。实例中的值表示将200和302应答缓存一个小时，将301应答缓存1天，其他应答均缓存1分钟。
+
+## gzip模块设置
+
+```text
+gzip on;
+gzip_min_length 1k;
+gzip_buffers    4 16k;
+gzip_http_version 1.1;
+gzip_comp_level 6;
+gzip_types text/html text/plain text/css text/javascript application/json application/javascript application/x-javascript application/xml;
+gzip_vary on;
+```
+
+
+
+* `gzip on;`开启gzip压缩输出
+* `gzip_min_length 1k;` 最小压缩文件大小，页面字节数从header头的Content-Length中获取。默认值为0，不管多大页面都压缩，建议设置成大于1K的字节数，小于1K可能会越压越大。
+* `gzip_buffers 4 16k;` 压缩缓冲区，表示申请四个16K的内存作为压缩结果流缓存，默认是申请与原始数据大小相同的内存空间来存储gzip压缩结果。
+* `gzip_http_version 1.1;` 用于设置识别HTTP协议版本，默认是1.1，目前主流浏览器都已成指出。（默认1.1，前端如果是squid2.5请使用1.0）
+* `gzip_comp_level 6;` 压缩等级，1压缩比最小，处理速度最快，9压缩比最大，传输速度快，但是消耗CPU资源。
+* `gzip_types text/plain application/x-javascript text/css application/xml;`压缩类型，默认就已经包含text/html，所以下面就不用再写了，写上去也不会有问题，但是会有一个warn。
+* `gzip_vary on;` 和http头有关系，会在响应头加个 Vary: Accept-Encoding ，可以让前端的缓存服务器缓存经过gzip压缩的页面，例如，用Squid缓存经过Nginx压缩的数据。
+* `gzip_proxied any;` Nginx作为反向代理的时候启用，决定开启或者关闭后端服务器返回的结果是否压缩，匹配的前提是后端服务器必须要返回包含”Via”的 header头。
+* `limit_zone crawler $binary_remote_addr 10m;` 开启限制IP连接数的时候需要使用
+

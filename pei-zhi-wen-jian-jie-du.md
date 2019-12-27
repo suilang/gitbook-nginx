@@ -157,3 +157,59 @@ gzip_vary on;
 * `gzip_proxied any;` Nginx作为反向代理的时候启用，决定开启或者关闭后端服务器返回的结果是否压缩，匹配的前提是后端服务器必须要返回包含”Via”的 header头。
 * `limit_zone crawler $binary_remote_addr 10m;` 开启限制IP连接数的时候需要使用
 
+## 四、配置虚拟主机
+
+### 1. 配置流程
+
+1. 复制一段完整的server标签段，到结尾。注意：要放在http的结束大括号前，也就是server标签段放入http标签。
+2. 更改server\_name 及对应网页的root根目录。
+3. 检查配置文件语法，平滑重启服务。
+4. 创建server\_name 对应网页的根目录，并且建立测试文件，如果没有index首页会出现403错误。
+5. 对客户端server\_name 的主机做host 解析或DNS配置。并检查（ping）。
+6. 浏览器访问，或者在Linux客户端做host解析，用wget或curl 访问。
+
+http服务上支持若干虚拟主机。每个虚拟主机一个对应的server配置项，配置项里面包含该虚拟主机相关的配置。
+
+```text
+server{
+    listen 80 default;
+    server_name _;
+    index index.html index.htm index.php;
+    root /data/htdocs/www;
+    #server_name_in_redirect off;
+    
+    location ~ .*\.(php|php5)?${
+      #fastcgi_pass  unix:/tmp/php-cgi.sock;
+      fastcgi_pass  127.0.0.1:9000;
+      fastcgi_index index.php;
+      include fcgi.conf;
+    }
+    
+    location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)${
+      expires      30d;
+    }
+    
+    location ~ .*\.(js|css)?${
+      expires      1h;
+    }
+  }
+```
+
+* `listen 80;` 监听端口，默认80，小于1024的要以root启动。可以为listen \*:80、listen 127.0.0.1:80等形式。
+* `server_name blog.biglittleant.cn;` 服务器名，如localhost、[www.example.com](http://www.example.com/)，可以通过正则匹配。
+* `root /var/www/html` 定义服务器的默认网站根目录位置。如果locationURL匹配的是子目录或文件，root没什么作用，一般放在server指令里面或/下。
+* `index index.jsp index.html index.htm` 定义路径下默认访问的文件名，一般跟着root放。
+
+### 2. location模块的写法
+
+proxy\_pass [http://backend](http://backend/)
+
+```text
+proxy_redirect off;
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+```
+
+
+

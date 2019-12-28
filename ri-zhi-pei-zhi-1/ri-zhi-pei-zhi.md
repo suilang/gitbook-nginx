@@ -1,10 +1,10 @@
 ---
 description: >-
-  nginx日志共三个参数access_log: 定义日志的路径及格式。log_format: 定义日志的模板。open_log_file_cache:
+  nginx日志共三个参数：access_log: 定义日志的路径及格式。log_format: 定义日志的模板。open_log_file_cache:
   定义日志文件缓存。
 ---
 
-# 日志配置
+# 日志参数配置
 
 ## **一、**access配置
 

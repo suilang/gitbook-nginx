@@ -18,7 +18,7 @@ main{
 
 server继承main，location继承server，upstream即不会继承其他设置也不会被继承。
 
-![](.gitbook/assets/image.png)
+![](../.gitbook/assets/image.png)
 
 ## 一、main全局配置
 
@@ -68,8 +68,8 @@ http{
 
 
 
-* include是个主模块指令，实现对配置文件所包含的文件的设定，可以减少主配置文件的复杂度。类似于Apache中的include方法。
-* default\_type属于HTTP核心模块指令，这里设定默认类型为二进制流，也就是当文件类型未定义时使用这种方式，例如在没有配置PHP环境时，Nginx是不予解析的，此时，用浏览器访问PHP文件就会出现下载窗口。
+* `include`是个主模块指令，实现对配置文件所包含的文件的设定，可以减少主配置文件的复杂度。类似于Apache中的include方法。
+* `default_type`属于HTTP核心模块指令，这里设定默认类型为二进制流，也就是当文件类型未定义时使用这种方式，例如在没有配置PHP环境时，Nginx是不予解析的，此时，用浏览器访问PHP文件就会出现下载窗口。
 * charset gb2312; 指定客户端编码格式。
 
 ### 3.1 客户端head缓存参数
@@ -135,7 +135,7 @@ fastcgi_cache_valid any 1m;
 
 ## gzip模块设置
 
-```text
+```markup
 gzip on;
 gzip_min_length 1k;
 gzip_buffers    4 16k;

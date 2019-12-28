@@ -2,8 +2,8 @@
 
 * [简介](README.md)
 * [快速开始](kuai-su-kai-shi/README.md)
-  * [完整示例](kuai-su-kai-shi/wan-zheng-shi-li.md)
   * [配置文件解读](kuai-su-kai-shi/pei-zhi-wen-jian-jie-du.md)
+  * [完整示例](kuai-su-kai-shi/wan-zheng-shi-li.md)
 
 ## 日志 <a id="ri-zhi-pei-zhi-1"></a>
 

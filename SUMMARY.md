@@ -7,9 +7,11 @@
 * [起步](kuai-su-kai-shi-1/kuai-su-kai-shi.md)
 * [配置文件解读](kuai-su-kai-shi-1/pei-zhi-wen-jian-jie-du.md)
 * [完整示例](kuai-su-kai-shi-1/wan-zheng-shi-li.md)
-* [Untitled](untitled.md)
-* [负载均衡](fu-zai-jun-heng-1/README.md)
-  * [一个简单的nginx负载均衡示例](fu-zai-jun-heng-1/yi-ge-jian-dan-de-nginx-fu-zai-jun-heng-shi-li.md)
+
+## 负载均衡
+
+* [负载均衡](fu-zai-jun-heng/fu-zai-jun-heng-1.md)
+* [一个简单的conf示例](fu-zai-jun-heng/yi-ge-jian-dan-de-nginx-fu-zai-jun-heng-shi-li.md)
 
 ## 日志 <a id="ri-zhi-pei-zhi-1"></a>
 

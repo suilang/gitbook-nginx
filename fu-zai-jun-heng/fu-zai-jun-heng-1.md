@@ -234,72 +234,27 @@ proxy_pass http://localhost:8000/uri/;
 * `proxy_max_temp_file_size 1024m;` 当 proxy\_buffers 放不下后端服务器的响应内容时，会将一部分保存到硬盘的临时文件中，这个值用来设置最大临时文件大小，默认1024M，它与 proxy\_cache 没有关系。大于这个值，将从upstream服务器传回。设置为0禁用。
 * `proxy_temp_file_write_size 64k;` proxy缓存临时文件的大小 proxy\_temp\_path（可以在编译的时候）指定写到哪那个目录。
 
-## 健康检查
-
-Nginx提供了health\_check语句来提供负载（upstream）时的键康检查机制（注意：此语句需要设置在location上下文中）。
-
-支持的参数有：
-
-* interval=time：设置两次健康检查之间的间隔值，默认为5秒
-* fails=number：设置将服务器视为不健康的连续检查次数，默认为1次
-* passes=number：设置一个服务器被视为健康的连续检查次数，默认为1次
-* uri=uri：定义健康检查的请求URI，默认为”/“
-* match=name：指定匹配配置块的名字，用于测试响应是否通过健康检测。默认为测试返回状态码为2xx和3xx
-
-一个简单的设置如下，将使用默认值：
+### 实现苹果手机和安卓手机访问不同的地址
 
 ```text
-location / {
-    proxy_pass http://backend;
-    health_check;
-}
+server {
+       listen       80;
+       server_name  blog.etiantian.org;
+       location / {
+        if ($http_user_agent ~* "android")
+          {
+            proxy_pass http://android_pools;
+          }
+        if ($http_user_agent ~* "iphone")
+          {
+            proxy_pass http://iphone_pools;
+            }
+        proxy_pass http://pc_pools;
+        include extra/proxy.conf;
+       }
+        access_log off;
+     }
 ```
-
-可以专门定义一个API用于健康检查：/api/health\_check，并只返回HTTP状态码为200。并设置两次检查之间的间隔值为1秒。这样，health\_check语句的配置如下：
-
-```text
-health_check uri="/api/health_check" interval;
-```
-
-匹配match的方法
-
-```text
-http {
-    server {
-    ...
-        location / {
-            proxy_pass http://backend;
-            health_check match=welcome;
-        }
-    }
-
-    match welcome {
-        status 200;
-        header Content-Type = text/html;
-        body ~ "Welcome to nginx!";
-    }
-}
-```
-
-match 例子举例
-
-* `status 200;`: status 等于 200
-* `status ! 500;`: status 不是 500
-* `status 200 204;`: status 是 200 或 204
-* `status ! 301 302;`: status 不是301或302。
-* `status 200-399;`: status 在 200 到 399之间。
-* `status ! 400-599;`: status 不在 400 到 599之间。
-* `status 301-303 307;`: status 是 301, 302, 303, 或 307。
-* `header Content-Type = text/html;`: “Content-Type” 的值是 text/html。
-* `header Content-Type != text/html;`: “Content-Type” 不是 text/html。
-* `header Connection ~ close;`: “Connection” 包含 close。
-* `header Connection !~ close;`: “Connection” 不包含 close。
-* `header Host;`: 请求头包含 “Host”。
-* `header ! X-Accel-Redirect;`: 请求头不包含 “X-Accel-Redirect”。
-* `body ~ "Welcome to nginx!";`: body 包含 “Welcome to nginx!”。
-* `body !~ "Welcome to nginx!";`: body 不包含 “Welcome to nginx!”。
-
-
 
 
 

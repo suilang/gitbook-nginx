@@ -11,6 +11,7 @@
 ## 负载均衡
 
 * [负载均衡](fu-zai-jun-heng/fu-zai-jun-heng-1.md)
+* [健康检查](fu-zai-jun-heng/jian-kang-jian-cha.md)
 * [一个简单的conf示例](fu-zai-jun-heng/yi-ge-jian-dan-de-nginx-fu-zai-jun-heng-shi-li.md)
 
 ## 日志 <a id="ri-zhi-pei-zhi-1"></a>

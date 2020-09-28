@@ -5,7 +5,7 @@
 ## 快速开始 <a id="kuai-su-kai-shi-1"></a>
 
 * [起步](kuai-su-kai-shi-1/kuai-su-kai-shi.md)
-* [配置文件解读](pei-zhi-wen-jian-jie-du.md)
+* [配置文件解读](kuai-su-kai-shi-1/pei-zhi-wen-jian-jie-du.md)
 * [完整示例](kuai-su-kai-shi-1/wan-zheng-shi-li.md)
 
 ## 负载均衡

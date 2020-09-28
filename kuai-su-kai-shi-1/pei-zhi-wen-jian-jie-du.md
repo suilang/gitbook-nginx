@@ -18,7 +18,7 @@ main{
 
 server继承main，location继承server，upstream即不会继承其他设置也不会被继承。
 
-![](.gitbook/assets/image.png)
+![](../.gitbook/assets/image.png)
 
 ## 一、main全局配置
 
@@ -68,8 +68,8 @@ http{
 
 
 
-* include是个主模块指令，实现对配置文件所包含的文件的设定，可以减少主配置文件的复杂度。类似于Apache中的include方法。
-* default\_type属于HTTP核心模块指令，这里设定默认类型为二进制流，也就是当文件类型未定义时使用这种方式，例如在没有配置PHP环境时，Nginx是不予解析的，此时，用浏览器访问PHP文件就会出现下载窗口。
+* `include`是个主模块指令，实现对配置文件所包含的文件的设定，可以减少主配置文件的复杂度。类似于Apache中的include方法。
+* `default_type`属于HTTP核心模块指令，这里设定默认类型为二进制流，也就是当文件类型未定义时使用这种方式，例如在没有配置PHP环境时，Nginx是不予解析的，此时，用浏览器访问PHP文件就会出现下载窗口。
 * charset gb2312; 指定客户端编码格式。
 
 ### 3.1 客户端head缓存参数
@@ -135,7 +135,7 @@ fastcgi_cache_valid any 1m;
 
 ## gzip模块设置
 
-```text
+```markup
 gzip on;
 gzip_min_length 1k;
 gzip_buffers    4 16k;
@@ -202,7 +202,7 @@ server{
 
 ### 2. location模块的写法
 
-proxy\_pass [http://backend](http://backend/)
+具体内容参考后续 负载均衡一章
 
 ```text
 proxy_redirect off;
@@ -211,5 +211,140 @@ proxy_set_header X-Real-IP $remote_addr;
 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 ```
 
+## 五、其他参数
 
+### 访问控制
+
+Nginx 的访问控制模块默认就会安装，而且写法也非常简单，可以分别有多个allow,deny，允许或禁止某个ip或ip段访问，依次满足任何一个规则就停止往下匹配。
+
+```text
+location /nginx-status {
+  stub_status on;
+  access_log off;
+#  auth_basic   "NginxStatus";
+#  auth_basic_user_file   /usr/local/nginx-1.6/htpasswd;
+  allow 192.168.10.100;
+  allow 172.29.73.0/24;
+  deny all;
+}
+```
+
+### 列出目录 autoindex
+
+Nginx默认是不允许列出整个目录的。如需此功能，打开nginx.conf文件，在location，server 或 http段中加入如下参数：
+
+```text
+location /images {
+  root   /var/www/nginx-default/images;
+  autoindex on;
+  autoindex_exact_size off;
+  autoindex_localtime on;
+  }
+```
+
+* `autoindex on;`运行列出目录内容。另外两个参数最好也加上去。
+* `autoindex_exact_size off;` 默认为on，显示出文件的确切大小，单位是bytes。改为off后，显示出文件的大概大小，单位是kB或者MB或者GB。
+* `autoindex_localtime on;` 默认为off，显示的文件时间为GMT时间。改为on后，显示的文件时间为文件的服务器时间。
+
+## 六、通用配置文件
+
+```text
+user  www www;
+worker_processes  2;
+error_log  logs/error.log;
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
+pid        logs/nginx.pid;
+events {
+    use epoll;
+    worker_connections  2048;
+}
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+    #access_log  logs/access.log  main;
+    sendfile        on;
+    # tcp_nopush     on;
+    keepalive_timeout  65;
+  # gzip压缩功能设置
+    gzip on;
+    gzip_min_length 1k;
+    gzip_buffers    4 16k;
+    gzip_http_version 1.1;
+    gzip_comp_level 6;
+    gzip_types text/html text/plain text/css text/javascript application/json application/javascript application/x-javascript application/xml;
+    gzip_vary on;
+  
+  # http_proxy 设置
+    client_max_body_size   10m;
+    client_body_buffer_size   128k;
+    proxy_connect_timeout   75;
+    proxy_send_timeout   75;
+    proxy_read_timeout   75;
+    proxy_buffer_size   4k;
+    proxy_buffers   4 32k;
+    proxy_busy_buffers_size   64k;
+    proxy_temp_file_write_size  64k;
+    proxy_temp_path   /usr/local/nginx/proxy_temp 1 2;
+  # 设定负载均衡后台服务器列表 
+    upstream  backend  { 
+              #ip_hash; 
+              server   192.168.10.100:8080 max_fails=2 fail_timeout=30s ;  
+              server   192.168.10.101:8080 max_fails=2 fail_timeout=30s ;  
+    }
+  # 很重要的虚拟主机配置，多个虚拟机可以复制修改此部分
+    server {
+        listen       80;
+        server_name  test.example.com;
+        root   /apps/oaapp;
+        charset utf-8;
+        access_log  logs/host.access.log  main;
+        #对 / 所有做负载均衡+反向代理
+        location / {
+            root   /apps/oaapp;
+            index  index.php index.html index.htm;
+            proxy_pass        http://backend;  
+            proxy_redirect off;
+            # 后端的Web服务器可以通过X-Forwarded-For获取用户真实IP
+            proxy_set_header  Host  $host;
+            proxy_set_header  X-Real-IP  $remote_addr;  
+            proxy_set_header  X-Forwarded-For  $proxy_add_x_forwarded_for;
+            proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+        }
+        
+        #静态文件，nginx自己处理，不去backend请求后端的服务
+        location  ~* /download/ {  
+            root /data/app/nginx/downloads;  
+        }
+        
+        location ~ .*\.(gif|jpg|jpeg|bmp|png|ico|txt|js|css)$ {   
+            root /data/app/nginx/images;   
+            expires      7d; 
+        }
+        
+        location /nginx_status {
+            stub_status on;
+            access_log off;
+            allow 192.168.10.0/24;
+            deny all;
+        }
+        
+        location ~ ^/(WEB-INF)/ {   
+            deny all;   
+        }
+        
+        #error_page  404              /404.html;
+        # redirect server error pages to the static page /50x.html
+        #
+        error_page   500 502 503 504  /50x.html;
+        
+        location = /50x.html {
+            root   html;
+        }
+    }
+}
+```
 

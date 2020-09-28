@@ -154,18 +154,18 @@ location ~* \.(gif|jpg|jpeg)$ {
 location / {
            return 401;
         }
-        location = / {
-            return 402;
-        }
-        location /documents/ {
-            return 403;
-        }
-        location ^~ /images/ {
-            return 404;
-        }
-        location ~* \.(gif|jpg|jpeg)$ {
-            return 500;
-        }
+location = / {
+    return 402;
+}
+location /documents/ {
+    return 403;
+}
+location ^~ /images/ {
+    return 404;
+}
+location ~* \.(gif|jpg|jpeg)$ {
+    return 500;
+}
 ```
 
 **结果：**
